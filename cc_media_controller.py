@@ -61,15 +61,15 @@ class CCMediaController():
         
         host = None
         dummy = None
-		
+
         is_ip_addr = device_name is not None and re.match( "[0-9]+.[0-9]+.[0-9]+.[0-9]+$", device_name) is not None
         
         if is_ip_addr:
             host = device_name
             try:
-				#print "ip_addr:", host.encode('utf-8'), "device name:", cc_device_finder.get_device_name(host).encode('utf-8')
+                #print "ip_addr:", host.encode('utf-8'), "device name:", cc_device_finder.get_device_name(host).encode('utf-8')
                 print >> sys.stderr, "ip_addr:", host.encode('utf-8'), "device name:", cc_device_finder.get_device_name(host).encode('utf-8')
-				
+
             except socket.error:
                 sys.exit("No Chromecast found on ip:" + host)
         else:
@@ -321,7 +321,11 @@ class CCMediaController():
 
         # wait for the player to return "BUFFERING", "PLAYING" or "IDLE"
         if resp.get("type", "") == "MEDIA_STATUS":            
-            player_state = ""
+            if self.media_status != None:
+                player_state = self.media_status.get("playerState", "")
+            else:
+                player_state = ""
+            
             while player_state != "PLAYING" and player_state != "IDLE" and player_state != "BUFFERING":
                 time.sleep(2)        
                 
@@ -408,7 +412,7 @@ class CCMediaController():
             if status['receiver_status'] is None:
                 return True
             else:    
-                return status['receiver_status'].get("statusText", "") == u"Ready To Cast"
+                return status['receiver_status'].get("statusText", "") == u"Ready To Cast" or status['receiver_status'].get("statusText", "") == u"Default Media Receiver"
 
         else:    
             return status['media_status'].get("playerState", "") == u"IDLE"
@@ -435,7 +439,6 @@ class CCMediaController():
         self.close_socket() 
         
         
-		
         
     def set_volume(self, level):
         """ set the receiver volume - a float value in level for absolute level or "+" / "-" indicates up or down"""
@@ -471,7 +474,7 @@ class CCMediaController():
             vol = self.volume_status.get('level', None)
                 
         return vol
-		
+
     def get_volume(self):
         """ get the current volume level """
         self.get_status()
